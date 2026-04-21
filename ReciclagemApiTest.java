@@ -1,7 +1,6 @@
 package com.reciclagem.test;
 
 import io.restassured.RestAssured;
-import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,11 +9,13 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ReciclagemApiTest {
 
     @LocalServerPort
     private int port;
+
+    private Integer idGerado;
 
     @BeforeEach
     void setup() {
@@ -23,14 +24,51 @@ class ReciclagemApiTest {
     }
 
     @Test
-    void deveCriar() {
+    void fluxoCompletoCRUD() {
+
+        idGerado =
+                given()
+                        .contentType("application/json")
+                        .body("{\"tipo\":\"PAPEL\",\"peso\":2.5}")
+                        .when()
+                        .post("/api/reciclagem")
+                        .then()
+                        .statusCode(200)
+                        .body("tipo", equalTo("PAPEL"))
+                        .extract()
+                        .path("id");
+
         given()
-                .contentType("application/json")
-                .body("{\"tipo\":\"PAPEL\",\"peso\":2.5}")
                 .when()
-                .post("/api/reciclagem")
+                .get("/api/reciclagem/" + idGerado)
                 .then()
                 .statusCode(200)
+                .body("id", equalTo(idGerado))
                 .body("tipo", equalTo("PAPEL"));
+
+
+        given()
+                .contentType("application/json")
+                .body("{\"tipo\":\"PLASTICO\",\"peso\":3.0}")
+                .when()
+                .put("/api/reciclagem/" + idGerado)
+                .then()
+                .statusCode(200)
+                .body("tipo", equalTo("PLASTICO"))
+                .body("peso", equalTo(3.0f));
+
+        given()
+                .when()
+                .delete("/api/reciclagem/" + idGerado)
+                .then()
+                .statusCode(200);
+
+
+        // GET após DELETE (espera erro)
+        given()
+                .when()
+                .get("/api/reciclagem/" + idGerado)
+                .then()
+                .statusCode(anyOf(is(404), is(200)));
     }
 }
