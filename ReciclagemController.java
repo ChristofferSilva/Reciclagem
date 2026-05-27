@@ -1,0 +1,114 @@
+package com.reciclagem.controller;
+
+import com.reciclagem.model.Reciclagem;
+
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@CrossOrigin(origins = "*")
+@RestController
+@RequestMapping("/reciclagem")
+public class ReciclagemController {
+
+    private List<Reciclagem> lista = new ArrayList<>();
+
+    /*
+        CONTADOR DE ID
+    */
+    private Long contadorId = 1L;
+
+    // =========================
+    // GET ALL
+    // =========================
+
+    @GetMapping
+    public List<Reciclagem> listar() {
+
+        return lista;
+    }
+
+    // =========================
+    // GET BY ID
+    // =========================
+
+    @GetMapping("/{id}")
+    public Reciclagem buscar(@PathVariable Long id) {
+
+        Optional<Reciclagem> resultado =
+                lista.stream()
+                        .filter(r -> r.getId().equals(id))
+                        .findFirst();
+
+        return resultado.orElse(null);
+    }
+
+    // =========================
+    // POST
+    // =========================
+
+    @PostMapping
+    public Reciclagem salvar(
+            @RequestBody Reciclagem reciclagem) {
+
+        /*
+            GERA ID AUTOMÁTICO
+        */
+        reciclagem.setId(contadorId);
+
+        contadorId++;
+
+        lista.add(reciclagem);
+
+        return reciclagem;
+    }
+
+    // =========================
+    // PUT
+    // =========================
+
+    @PutMapping("/{id}")
+    public Reciclagem atualizar(
+
+            @PathVariable Long id,
+
+            @RequestBody Reciclagem reciclagemAtualizada) {
+
+        for (Reciclagem reciclagem : lista) {
+
+            if (reciclagem.getId().equals(id)) {
+
+                reciclagem.setTipo(
+                        reciclagemAtualizada.getTipo());
+
+                reciclagem.setPeso(
+                        reciclagemAtualizada.getPeso());
+
+                return reciclagem;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+
+    @DeleteMapping("/{id}")
+    public String deletar(@PathVariable Long id) {
+
+        boolean removido =
+                lista.removeIf(
+                        r -> r.getId().equals(id));
+
+        if (removido) {
+
+            return "Deletado com sucesso";
+        }
+
+        return "ID não encontrado";
+    }
+}
